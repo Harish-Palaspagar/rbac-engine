@@ -33,7 +33,6 @@ public class PermissionService {
 
     }
 
-    @Transactional(readOnly = true)
     public List<PermissionResponse> getAllPermissions() {
 
         return permissionRepository.findAll().stream()
@@ -42,7 +41,6 @@ public class PermissionService {
 
     }
 
-    @Transactional(readOnly = true)
     public PermissionResponse getPermissionById(Long id) {
 
         return permissionRepository.findById(id)

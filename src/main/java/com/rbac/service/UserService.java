@@ -22,7 +22,6 @@ public class UserService {
     private final RoleRepo roleRepository;
     private final UserRoleRepo userRoleRepository;
 
-    @Transactional
     public AssignmentResponse assignRoleToUser(Long userId, Long roleId) {
 
         User user = userRepository.findById(userId)

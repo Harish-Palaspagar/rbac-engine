@@ -26,7 +26,6 @@ public class RoleService {
     private final PermissionRepo permissionRepository;
     private final RolePermissionRepo rolePermissionRepository;
 
-    @Transactional
     public RoleResponse createRole(RoleRequest request) {
 
         String name = request.getName().toUpperCase().trim();
@@ -40,7 +39,6 @@ public class RoleService {
 
     }
 
-    @Transactional
     public AssignmentResponse assignPermissionToRole(Long roleId, Long permissionId) {
 
         Role role = roleRepository.findById(roleId)
@@ -64,14 +62,12 @@ public class RoleService {
 
     }
 
-    @Transactional(readOnly = true)
     public List<RoleResponse> getAllRoles() {
         return roleRepository.findAll().stream()
                 .map(this::toDto)
                 .toList();
     }
 
-    @Transactional(readOnly = true)
     public RoleResponse getRoleById(Long id) {
 
         return roleRepository.findById(id)

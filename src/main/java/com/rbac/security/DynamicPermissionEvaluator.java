@@ -24,34 +24,11 @@ public class DynamicPermissionEvaluator implements PermissionEvaluator {
                                  Object targetDomainObject,
                                  Object permission) {
 
-        if (!authentication.isAuthenticated()) {
-            log.debug("Permission check failed: unauthenticated request");
-            return false;
-        }
-        if (!(permission instanceof String requiredPermission)) {
-            log.warn("Permission must be a String, got: {}", permission);
-            return false;
-        }
-        if (!(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
-            log.warn("Principal is not CustomUserDetails: {}", authentication.getPrincipal());
-            return false;
-        }
-        Long userId = userDetails.getUserId();
-        log.debug("Evaluating permission '{}' for userId={}", requiredPermission, userId);
-        List<Long> roleIds = userRoleRepository.findRoleIdsByUserId(userId);
-
-        if (roleIds.isEmpty()) {
-            log.debug("No roles found for userId={} — denying '{}'", userId, requiredPermission);
-            return false;
-        }
-        List<String> grantedPermissions = rolePermissionRepository
-                .findPermissionNamesByRoleIds(roleIds);
-        boolean granted = grantedPermissions.contains(requiredPermission);
-        log.debug("userId={} roleIds={} grantedPermissions={} required='{}' → {}",
-                userId, roleIds, grantedPermissions, requiredPermission,
-                granted ? "GRANTED" : "DENIED");
-        return granted;
-
+        if (!(permission instanceof String requiredPermission)) return false;
+        if (!(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) return false;
+        List<Long> roleIds = userRoleRepository.findRoleIdsByUserId(userDetails.getUserId());
+        List<String> grantedPermissions = rolePermissionRepository.findPermissionNamesByRoleIds(roleIds);
+        return grantedPermissions.contains(requiredPermission);
     }
 
     @Override
