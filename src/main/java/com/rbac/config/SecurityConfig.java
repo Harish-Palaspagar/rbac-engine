@@ -1,6 +1,5 @@
 package com.rbac.config;
 
-import com.rbac.security.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,8 +18,6 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
-    private final UserDetailsServiceImpl userDetailsService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
