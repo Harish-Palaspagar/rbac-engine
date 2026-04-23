@@ -5,11 +5,16 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 public class RbacExceptions {
 
+    private RbacExceptions() {
+
+        throw new IllegalStateException("Utility class");
+
+    }
+
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public static class ResourceNotFoundException extends RuntimeException {
 
         public ResourceNotFoundException(String message) {
-
             super(message);
         }
 
@@ -20,7 +25,6 @@ public class RbacExceptions {
 
         public DuplicateResourceException(String message) {
             super(message);
-
         }
 
     }
@@ -29,10 +33,9 @@ public class RbacExceptions {
     public static class InvalidOperationException extends RuntimeException {
 
         public InvalidOperationException(String message) {
-
             super(message);
-
         }
 
     }
+
 }
