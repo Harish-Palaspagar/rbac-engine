@@ -29,6 +29,7 @@ public class DynamicPermissionEvaluator implements PermissionEvaluator {
         List<Long> roleIds = userRoleRepository.findRoleIdsByUserId(userDetails.getUserId());
         List<String> grantedPermissions = rolePermissionRepository.findPermissionNamesByRoleIds(roleIds);
         return grantedPermissions.contains(requiredPermission);
+
     }
 
     @Override

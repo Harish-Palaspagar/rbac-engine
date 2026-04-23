@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository
 public interface UserRoleRepo extends JpaRepository<UserRole, Long> {
 
     boolean existsByUserIdAndRoleId(Long userId, Long roleId);

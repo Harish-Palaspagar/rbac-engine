@@ -593,3 +593,9 @@ This assigns the USER role (id=2) to user2 (id=3). After this, user2 can access 
 - `spring.jpa.hibernate.ddl-auto=create-drop` means Hibernate creates tables on startup and drops them on shutdown.
 - `spring.jpa.defer-datasource-initialization=true` ensures `data.sql` runs after Hibernate creates the schema.
 - Passwords in `data.sql` are BCrypt hashed at strength 10.
+
+@TODO
+1.Write the test cases the coverage should be more tha 80 percent.
+2.Integrate the SonarCube - Resolve vulnerabilities, critical and bugs if any 
+3.Deploy this application on aws 
+4.Use CICD tool GitHub actions
