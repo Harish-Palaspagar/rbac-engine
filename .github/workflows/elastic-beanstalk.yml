@@ -1,0 +1,105 @@
+name: CI/CD to Elastic Beanstalk
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  JAVA_VERSION: "21"
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  EB_APPLICATION_NAME: ${{ vars.EB_APPLICATION_NAME }}
+  EB_ENVIRONMENT_NAME: ${{ vars.EB_ENVIRONMENT_NAME }}
+  EB_S3_BUCKET: ${{ vars.EB_S3_BUCKET }}
+
+jobs:
+  test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Run tests
+        run: ./mvnw -B clean test
+
+      - name: Build package
+        run: ./mvnw -B package -DskipTests
+
+      - name: Upload application artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-jar
+          path: target/*.jar
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy to Elastic Beanstalk
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Download application artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: application-jar
+          path: deploy
+
+      - name: Select packaged jar
+        shell: bash
+        run: |
+          JAR_FILE="$(find deploy -maxdepth 1 -type f -name '*.jar' | head -n 1)"
+          if [ -z "$JAR_FILE" ]; then
+            echo "No JAR artifact found"
+            exit 1
+          fi
+          echo "JAR_FILE=$JAR_FILE" >> "$GITHUB_ENV"
+          echo "VERSION_LABEL=deploy-${GITHUB_SHA}" >> "$GITHUB_ENV"
+          echo "S3_KEY=beanstalk/${GITHUB_SHA}.jar" >> "$GITHUB_ENV"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Validate required deployment configuration
+        shell: bash
+        run: |
+          test -n "${AWS_REGION}" || (echo "Missing repository variable AWS_REGION" && exit 1)
+          test -n "${EB_APPLICATION_NAME}" || (echo "Missing repository variable EB_APPLICATION_NAME" && exit 1)
+          test -n "${EB_ENVIRONMENT_NAME}" || (echo "Missing repository variable EB_ENVIRONMENT_NAME" && exit 1)
+          test -n "${EB_S3_BUCKET}" || (echo "Missing repository variable EB_S3_BUCKET" && exit 1)
+
+      - name: Upload artifact to S3
+        run: aws s3 cp "${JAR_FILE}" "s3://${EB_S3_BUCKET}/${S3_KEY}"
+
+      - name: Create Elastic Beanstalk application version
+        run: >
+          aws elasticbeanstalk create-application-version
+          --application-name "${EB_APPLICATION_NAME}"
+          --version-label "${VERSION_LABEL}"
+          --source-bundle S3Bucket="${EB_S3_BUCKET}",S3Key="${S3_KEY}"
+
+      - name: Deploy application version
+        run: >
+          aws elasticbeanstalk update-environment
+          --environment-name "${EB_ENVIRONMENT_NAME}"
+          --version-label "${VERSION_LABEL}"

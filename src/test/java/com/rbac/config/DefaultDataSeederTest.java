@@ -27,7 +27,6 @@ class DefaultDataSeederTest {
     private final UserRoleRepo userRoleRepository = mock(UserRoleRepo.class);
     private final RolePermissionRepo rolePermissionRepository = mock(RolePermissionRepo.class);
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
-
     private DefaultDataSeeder seeder;
 
     @BeforeEach
@@ -40,21 +39,18 @@ class DefaultDataSeederTest {
                 rolePermissionRepository,
                 passwordEncoder
         );
-
         ReflectionTestUtils.setField(seeder, "adminUsername", "admin");
         ReflectionTestUtils.setField(seeder, "adminPassword", "admin123");
         ReflectionTestUtils.setField(seeder, "user1Username", "user1");
         ReflectionTestUtils.setField(seeder, "user1Password", "user123");
         ReflectionTestUtils.setField(seeder, "user2Username", "user2");
         ReflectionTestUtils.setField(seeder, "user2Password", "user123");
-
         when(roleRepository.findByName(any())).thenReturn(Optional.empty());
         when(permissionRepository.findByName(any())).thenReturn(Optional.empty());
         when(userRepository.findByUsername(any())).thenReturn(Optional.empty());
         when(rolePermissionRepository.existsByRoleIdAndPermissionId(anyLong(), anyLong())).thenReturn(false);
         when(userRoleRepository.existsByUserIdAndRoleId(anyLong(), anyLong())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenAnswer(invocation -> "encoded-" + invocation.getArgument(0));
-
         when(roleRepository.save(any(Role.class))).thenAnswer(invocation -> {
             Role role = invocation.getArgument(0);
             if (role.getId() == null) {
@@ -62,7 +58,6 @@ class DefaultDataSeederTest {
             }
             return role;
         });
-
         when(permissionRepository.save(any(Permission.class))).thenAnswer(invocation -> {
             Permission permission = invocation.getArgument(0);
             if (permission.getId() == null) {
@@ -70,7 +65,6 @@ class DefaultDataSeederTest {
             }
             return permission;
         });
-
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User user = invocation.getArgument(0);
             if (user.getId() == null) {
@@ -78,6 +72,7 @@ class DefaultDataSeederTest {
             }
             return user;
         });
+
     }
 
     @Test
@@ -91,10 +86,12 @@ class DefaultDataSeederTest {
         verify(userRoleRepository, times(2)).save(any());
         verify(passwordEncoder).encode("admin123");
         verify(passwordEncoder, times(2)).encode("user123");
+
     }
 
     @Test
     void run_SkipsExistingSeedData() throws Exception {
+
         Role adminRole = Role.builder().id(1L).name("ADMIN").build();
         Role userRole = Role.builder().id(2L).name("USER").build();
         Permission manageRoles = Permission.builder().id(10L).name("MANAGE_ROLES").build();
@@ -105,7 +102,6 @@ class DefaultDataSeederTest {
         User admin = User.builder().id(100L).username("admin").password("encoded").build();
         User user1 = User.builder().id(101L).username("user1").password("encoded").build();
         User user2 = User.builder().id(102L).username("user2").password("encoded").build();
-
         when(roleRepository.findByName("ADMIN")).thenReturn(Optional.of(adminRole));
         when(roleRepository.findByName("USER")).thenReturn(Optional.of(userRole));
         when(permissionRepository.findByName("MANAGE_ROLES")).thenReturn(Optional.of(manageRoles));
@@ -118,14 +114,14 @@ class DefaultDataSeederTest {
         when(userRepository.findByUsername("user2")).thenReturn(Optional.of(user2));
         when(rolePermissionRepository.existsByRoleIdAndPermissionId(anyLong(), anyLong())).thenReturn(true);
         when(userRoleRepository.existsByUserIdAndRoleId(anyLong(), anyLong())).thenReturn(true);
-
         seeder.run(new DefaultApplicationArguments(new String[0]));
-
         verify(roleRepository, never()).save(any(Role.class));
         verify(permissionRepository, never()).save(any(Permission.class));
         verify(userRepository, never()).save(any(User.class));
         verify(rolePermissionRepository, never()).save(any());
         verify(userRoleRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(anyString());
+
     }
+
 }
