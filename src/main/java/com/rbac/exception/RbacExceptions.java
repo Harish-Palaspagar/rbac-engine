@@ -18,8 +18,7 @@ public class RbacExceptions {
     @ResponseStatus(HttpStatus.CONFLICT)
     public static class DuplicateResourceException extends RuntimeException {
 
-        public DuplicateResourceException(String message)
-        {
+        public DuplicateResourceException(String message) {
             super(message);
 
         }

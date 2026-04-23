@@ -1,6 +1,7 @@
 # Dynamic RBAC — Role-Based Access Control with Spring Boot
 
-A production-ready implementation of dynamic Role-Based Access Control (RBAC) using Spring Boot, Spring Security, and JPA. Permissions are stored in the database and evaluated at runtime — no hardcoded roles in source code.
+A production-ready implementation of dynamic Role-Based Access Control (RBAC) using Spring Boot, Spring Security, and
+JPA. Permissions are stored in the database and evaluated at runtime — no hardcoded roles in source code.
 
 ---
 
@@ -48,22 +49,23 @@ This approach has serious limitations:
 - You cannot assign fine-grained permissions per role at runtime
 - Business teams cannot manage access control without developer involvement
 
-This project solves all of that by storing the entire permission model in the database and evaluating it dynamically on every request.
+This project solves all of that by storing the entire permission model in the database and evaluating it dynamically on
+every request.
 
 ---
 
 ## Technology Stack
 
-| Technology           | Version | Purpose                            |
-|----------------------|---------|------------------------------------|
-| Java                 | 21      | Programming language               |
-| Spring Boot          | 4.0.5   | Application framework              |
-| Spring Security      | 7.0.4   | Authentication and authorization   |
-| Spring Data JPA      | 4.0.4   | Database access layer              |
-| Hibernate            | 7.2.7   | ORM provider                       |
-| H2 Database          | 2.4.240 | In-memory database for development |
-| Lombok               | 1.18.44 | Boilerplate reduction              |
-| Jakarta Validation   | 3.1.1   | Request body validation            |
+| Technology         | Version | Purpose                            |
+|--------------------|---------|------------------------------------|
+| Java               | 21      | Programming language               |
+| Spring Boot        | 4.0.5   | Application framework              |
+| Spring Security    | 7.0.4   | Authentication and authorization   |
+| Spring Data JPA    | 4.0.4   | Database access layer              |
+| Hibernate          | 7.2.7   | ORM provider                       |
+| H2 Database        | 2.4.240 | In-memory database for development |
+| Lombok             | 1.18.44 | Boilerplate reduction              |
+| Jakarta Validation | 3.1.1   | Request body validation            |
 
 ---
 
@@ -127,7 +129,9 @@ password          id (PK)                         id (PK)
 enabled
 ```
 
-The schema uses two explicit join tables (`user_role` and `role_permission`) instead of JPA's `@ManyToMany`. This gives full control over the join tables, allows additional fields to be added later (such as assigned date), and makes queries more explicit.
+The schema uses two explicit join tables (`user_role` and `role_permission`) instead of JPA's `@ManyToMany`. This gives
+full control over the join tables, allows additional fields to be added later (such as assigned date), and makes queries
+more explicit.
 
 ---
 
@@ -178,6 +182,7 @@ Spring stores the authenticated user in `SecurityContextHolder` for use througho
 ### Stage 6 — URL-Level Authorization
 
 `SecurityConfig` checks:
+
 ```
 /h2-console/** → permitAll
 Any other URL  → must be authenticated
@@ -186,6 +191,7 @@ Any other URL  → must be authenticated
 ### Stage 7 — Method-Level Authorization (@PreAuthorize)
 
 AOP intercepts the controller method before it runs:
+
 ```
 @PreAuthorize("hasPermission(null, 'MANAGE_ROLES')")
     Evaluates SpEL expression
@@ -195,6 +201,7 @@ AOP intercepts the controller method before it runs:
 ### Stage 8 — Database Permission Check
 
 `DynamicPermissionEvaluator` queries the database:
+
 ```
 Step 1: Get role IDs for the user
         SELECT role_id FROM user_role WHERE user_id = 1
@@ -260,7 +267,8 @@ The evaluator performs exactly two database queries on every permission check:
 1. `SELECT role_id FROM user_role WHERE user_id = ?`
 2. `SELECT p.name FROM role_permission JOIN permission WHERE role_id IN (?)`
 
-This is intentional — it ensures permissions are always fresh from the database. If you assign a new permission via the API, it takes effect on the very next request.
+This is intentional — it ensures permissions are always fresh from the database. If you assign a new permission via the
+API, it takes effect on the very next request.
 
 ---
 
@@ -286,9 +294,11 @@ public class MethodSecurityConfig {
 }
 ```
 
-`@EnableMethodSecurity(prePostEnabled = true)` activates support for `@PreAuthorize` and `@PostAuthorize` on controller and service methods.
+`@EnableMethodSecurity(prePostEnabled = true)` activates support for `@PreAuthorize` and `@PostAuthorize` on controller
+and service methods.
 
-`handler.setPermissionEvaluator(dynamicPermissionEvaluator)` tells Spring: when a `@PreAuthorize` expression contains `hasPermission(...)`, delegate evaluation to `DynamicPermissionEvaluator`.
+`handler.setPermissionEvaluator(dynamicPermissionEvaluator)` tells Spring: when a `@PreAuthorize` expression contains
+`hasPermission(...)`, delegate evaluation to `DynamicPermissionEvaluator`.
 
 On every controller method annotated with `@PreAuthorize("hasPermission(null, 'SOME_PERMISSION')")`:
 
@@ -310,11 +320,15 @@ The standard Spring Security approach uses:
 
 This has the following drawbacks:
 
-1. **Code change required for new roles** — adding a MANAGER role that can only manage permissions requires a developer to update and redeploy the code.
+1. **Code change required for new roles** — adding a MANAGER role that can only manage permissions requires a developer
+   to update and redeploy the code.
 
-2. **No fine-grained permission control** — `hasRole('ADMIN')` gives the entire ADMIN role access to everything annotated with it. You cannot say "ADMIN has MANAGE_ROLES but not DELETE_USERS" without code changes.
+2. **No fine-grained permission control** — `hasRole('ADMIN')` gives the entire ADMIN role access to everything
+   annotated with it. You cannot say "ADMIN has MANAGE_ROLES but not DELETE_USERS" without code changes.
 
-3. **Authorities must be loaded at login** — Spring's built-in role checks rely on the `getAuthorities()` method of `UserDetails`, which means all roles must be loaded and stored at the time of authentication. If roles change, the user must log out and log back in.
+3. **Authorities must be loaded at login** — Spring's built-in role checks rely on the `getAuthorities()` method of
+   `UserDetails`, which means all roles must be loaded and stored at the time of authentication. If roles change, the
+   user must log out and log back in.
 
 This project avoids all of these issues:
 
@@ -339,12 +353,14 @@ public ResponseEntity<RoleResponse> createRole(@Valid @RequestBody RoleRequest r
 ```
 
 When admin (who has ADMIN role with MANAGE_ROLES permission) calls this:
+
 ```
 Permission check: ["MANAGE_ROLES", "MANAGE_PERMISSIONS", "ASSIGN_PERMISSIONS", "ASSIGN_ROLES"]
                    .contains("MANAGE_ROLES") → true → 201 Created
 ```
 
 When user1 (who has USER role with ACCESS_SECURE_DATA permission) calls this:
+
 ```
 Permission check: ["ACCESS_SECURE_DATA"].contains("MANAGE_ROLES") → false → 403 Forbidden
 ```
@@ -380,11 +396,11 @@ The application seeds the following data on startup via `data.sql`:
 
 ### Users
 
-| ID | Username | Password   |
-|----|----------|------------|
-| 1  | admin    | admin123   |
-| 2  | user1    | user123    |
-| 3  | user2    | user123    |
+| ID | Username | Password |
+|----|----------|----------|
+| 1  | admin    | admin123 |
+| 2  | user1    | user123  |
+| 3  | user2    | user123  |
 
 ### Roles
 
@@ -395,27 +411,27 @@ The application seeds the following data on startup via `data.sql`:
 
 ### Permissions
 
-| ID | Name                |
-|----|---------------------|
-| 1  | MANAGE_ROLES        |
-| 2  | MANAGE_PERMISSIONS  |
-| 3  | ASSIGN_PERMISSIONS  |
-| 4  | ASSIGN_ROLES        |
-| 5  | ACCESS_SECURE_DATA  |
+| ID | Name               |
+|----|--------------------|
+| 1  | MANAGE_ROLES       |
+| 2  | MANAGE_PERMISSIONS |
+| 3  | ASSIGN_PERMISSIONS |
+| 4  | ASSIGN_ROLES       |
+| 5  | ACCESS_SECURE_DATA |
 
 ### Role — Permission Assignments
 
-| Role  | Permissions                                                              |
-|-------|--------------------------------------------------------------------------|
-| ADMIN | MANAGE_ROLES, MANAGE_PERMISSIONS, ASSIGN_PERMISSIONS, ASSIGN_ROLES       |
-| USER  | ACCESS_SECURE_DATA                                                       |
+| Role  | Permissions                                                        |
+|-------|--------------------------------------------------------------------|
+| ADMIN | MANAGE_ROLES, MANAGE_PERMISSIONS, ASSIGN_PERMISSIONS, ASSIGN_ROLES |
+| USER  | ACCESS_SECURE_DATA                                                 |
 
 ### User — Role Assignments
 
-| User  | Role  |
-|-------|-------|
-| admin | ADMIN |
-| user1 | USER  |
+| User  | Role                    |
+|-------|-------------------------|
+| admin | ADMIN                   |
+| user1 | USER                    |
 | user2 | (none — assign via API) |
 
 ---
@@ -426,38 +442,38 @@ All endpoints use HTTP Basic Authentication.
 
 ### Role Endpoints
 
-| Method | URL                                    | Permission Required  | Description                  |
-|--------|----------------------------------------|----------------------|------------------------------|
-| POST   | /roles                                 | MANAGE_ROLES         | Create a new role             |
-| GET    | /roles                                 | MANAGE_ROLES         | List all roles                |
-| GET    | /roles/{id}                            | MANAGE_ROLES         | Get role by ID                |
-| POST   | /roles/{roleId}/permissions/{permId}   | ASSIGN_PERMISSIONS   | Assign permission to role     |
+| Method | URL                                  | Permission Required | Description               |
+|--------|--------------------------------------|---------------------|---------------------------|
+| POST   | /roles                               | MANAGE_ROLES        | Create a new role         |
+| GET    | /roles                               | MANAGE_ROLES        | List all roles            |
+| GET    | /roles/{id}                          | MANAGE_ROLES        | Get role by ID            |
+| POST   | /roles/{roleId}/permissions/{permId} | ASSIGN_PERMISSIONS  | Assign permission to role |
 
 ### Permission Endpoints
 
-| Method | URL                  | Permission Required    | Description               |
-|--------|----------------------|------------------------|---------------------------|
-| POST   | /permissions         | MANAGE_PERMISSIONS     | Create a new permission   |
-| GET    | /permissions         | MANAGE_PERMISSIONS     | List all permissions      |
-| GET    | /permissions/{id}    | MANAGE_PERMISSIONS     | Get permission by ID      |
+| Method | URL               | Permission Required | Description             |
+|--------|-------------------|---------------------|-------------------------|
+| POST   | /permissions      | MANAGE_PERMISSIONS  | Create a new permission |
+| GET    | /permissions      | MANAGE_PERMISSIONS  | List all permissions    |
+| GET    | /permissions/{id} | MANAGE_PERMISSIONS  | Get permission by ID    |
 
 ### User Endpoints
 
-| Method | URL                              | Permission Required | Description              |
-|--------|----------------------------------|---------------------|--------------------------|
-| POST   | /users/{userId}/roles/{roleId}   | ASSIGN_ROLES        | Assign role to user      |
+| Method | URL                            | Permission Required | Description         |
+|--------|--------------------------------|---------------------|---------------------|
+| POST   | /users/{userId}/roles/{roleId} | ASSIGN_ROLES        | Assign role to user |
 
 ### Protected Demo Endpoint
 
-| Method | URL           | Permission Required  | Description                        |
-|--------|---------------|----------------------|------------------------------------|
-| GET    | /secure-data  | ACCESS_SECURE_DATA   | Returns data accessible by USER role |
+| Method | URL          | Permission Required | Description                          |
+|--------|--------------|---------------------|--------------------------------------|
+| GET    | /secure-data | ACCESS_SECURE_DATA  | Returns data accessible by USER role |
 
 ### H2 Console
 
-| URL          | Auth Required | Description         |
-|--------------|---------------|---------------------|
-| /h2-console  | No            | H2 database browser |
+| URL         | Auth Required | Description         |
+|-------------|---------------|---------------------|
+| /h2-console | No            | H2 database browser |
 
 ---
 
@@ -469,6 +485,7 @@ All endpoints use HTTP Basic Authentication.
 - Maven 3.6 or higher installed
 
 Verify with:
+
 ```bash
 java -version
 mvn -version
@@ -498,6 +515,7 @@ Or run directly from your IDE by executing `DynamicRbacApplication.java`.
 The application starts on `http://localhost:8080`.
 
 You will see this in the logs:
+
 ```
 Tomcat initialized with port 8080 (http)
 HikariPool-1 - Start completed.
@@ -507,6 +525,7 @@ Started DynamicRbacApplication
 ### Step 4 — Verify Startup
 
 Open the H2 console to verify the database was seeded:
+
 ```
 URL:      http://localhost:8080/h2-console
 JDBC URL: jdbc:h2:mem:rbacdb
@@ -515,6 +534,7 @@ Password: password
 ```
 
 Run this query to confirm seed data:
+
 ```sql
 SELECT u.username, r.name AS role, p.name AS permission
 FROM app_user u
@@ -527,6 +547,7 @@ JOIN permission p ON p.id = rp.permission_id;
 ### Step 5 — Test with Postman or curl
 
 **Create a new role (as admin):**
+
 ```bash
 curl -X POST http://localhost:8080/roles \
   -u admin:admin123 \
@@ -535,6 +556,7 @@ curl -X POST http://localhost:8080/roles \
 ```
 
 Expected response:
+
 ```json
 HTTP 201 Created
 {
@@ -544,12 +566,14 @@ HTTP 201 Created
 ```
 
 **Access secure data (as user1):**
+
 ```bash
 curl -X GET http://localhost:8080/secure-data \
   -u user1:user123
 ```
 
 Expected response:
+
 ```json
 HTTP 200 OK
 {
@@ -561,6 +585,7 @@ HTTP 200 OK
 ```
 
 **Try accessing a restricted endpoint with the wrong user:**
+
 ```bash
 curl -X POST http://localhost:8080/roles \
   -u user1:user123 \
@@ -569,6 +594,7 @@ curl -X POST http://localhost:8080/roles \
 ```
 
 Expected response:
+
 ```json
 HTTP 403 Forbidden
 {
@@ -596,6 +622,6 @@ This assigns the USER role (id=2) to user2 (id=3). After this, user2 can access 
 
 @TODO
 1.Write the test cases the coverage should be more tha 80 percent.
-2.Integrate the SonarCube - Resolve vulnerabilities, critical and bugs if any 
-3.Deploy this application on aws 
+2.Integrate the SonarCube - Resolve vulnerabilities, critical and bugs if any
+3.Deploy this application on aws
 4.Use CICD tool GitHub actions

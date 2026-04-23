@@ -31,6 +31,7 @@ public class RoleController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
     }
+
     @PostMapping("/{roleId}/permissions/{permissionId}")
     @PreAuthorize("hasPermission(null, 'ASSIGN_PERMISSIONS')")
     public ResponseEntity<AssignmentResponse> assignPermissionToRole(

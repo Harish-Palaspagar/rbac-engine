@@ -17,10 +17,10 @@ public class CustomUserDetails implements UserDetails {
     private final boolean enabled;
 
     public CustomUserDetails(User user) {
-        this.userId   = user.getId();
+        this.userId = user.getId();
         this.username = user.getUsername();
         this.password = user.getPassword();
-        this.enabled  = user.isEnabled();
+        this.enabled = user.isEnabled();
     }
 
     @Override
@@ -31,37 +31,42 @@ public class CustomUserDetails implements UserDetails {
     }
 
     @Override
-    public String getPassword(){
+    public String getPassword() {
 
         return password;
 
     }
+
     @Override
-    public String getUsername(){
+    public String getUsername() {
 
         return username;
 
     }
+
     @Override
     public boolean isAccountNonExpired() {
 
         return true;
 
     }
+
     @Override
     public boolean isAccountNonLocked() {
 
         return true;
 
     }
+
     @Override
-    public boolean isCredentialsNonExpired()  {
+    public boolean isCredentialsNonExpired() {
 
         return true;
 
     }
+
     @Override
-    public boolean isEnabled(){
+    public boolean isEnabled() {
 
         return enabled;
 

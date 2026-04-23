@@ -1,22 +1,22 @@
 package com.rbac.controller;
 
+import com.rbac.repository.RolePermissionRepo;
+import com.rbac.repository.UserRoleRepo;
 import com.rbac.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.List;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.rbac.repository.RolePermissionRepo;
-import com.rbac.repository.UserRoleRepo;
-import org.mockito.Mockito;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import java.util.List;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -38,7 +38,7 @@ class SecureDataControllerTest {
         Mockito.when(userRoleRepo.findRoleIdsByUserId(1L)).thenReturn(List.of(1L));
         Mockito.when(rolePermissionRepo.findPermissionNamesByRoleIds(List.of(1L))).thenReturn(List.of("ACCESS_SECURE_DATA"));
         mockMvc.perform(get("/secure-data")
-                .with(user(userDetails)))
+                        .with(user(userDetails)))
                 .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessedBy").value("admin"));

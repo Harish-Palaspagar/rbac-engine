@@ -1,6 +1,5 @@
 package com.rbac.controller;
 
-import tools.jackson.databind.ObjectMapper;
 import com.rbac.dto.PermissionRequest;
 import com.rbac.dto.PermissionResponse;
 import com.rbac.service.PermissionService;
@@ -9,9 +8,10 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
@@ -42,8 +42,8 @@ class PermissionControllerTest {
         PermissionResponse response = PermissionResponse.builder().id(1L).name("MANAGE_USERS").build();
         Mockito.when(permissionService.createPermission(any(PermissionRequest.class))).thenReturn(response);
         mockMvc.perform(post("/permissions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("MANAGE_USERS"));
 
