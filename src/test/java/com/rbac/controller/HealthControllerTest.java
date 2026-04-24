@@ -22,10 +22,10 @@ class HealthControllerTest {
 
         mockMvc.perform(get("/healthz"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.release").value("healthz-v2"))
                 .andExpect(jsonPath("$.status").value("ok"))
                 .andExpect(jsonPath("$.service").value("dynamic-rbac"));
 
     }
 
 }
-

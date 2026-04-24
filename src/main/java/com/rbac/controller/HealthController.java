@@ -11,12 +11,13 @@ public class HealthController {
 
     @GetMapping("/healthz")
     public ResponseEntity<Map<String, String>> healthz() {
-        
+
         return ResponseEntity.ok(Map.of(
+                "release", "healthz-v2",
                 "status", "ok",
                 "service", "dynamic-rbac"
         ));
-        
+
     }
-    
+
 }
