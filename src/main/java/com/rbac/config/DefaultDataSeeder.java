@@ -31,6 +31,7 @@ public class DefaultDataSeeder implements ApplicationRunner {
     private static final List<String> ADMIN_PERMISSIONS = List.of(
             "MANAGE_ROLES",
             "MANAGE_PERMISSIONS",
+            "MANAGE_USERS",
             "ASSIGN_PERMISSIONS",
             "ASSIGN_ROLES"
     );

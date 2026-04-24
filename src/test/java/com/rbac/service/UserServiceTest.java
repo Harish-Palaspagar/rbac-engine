@@ -1,6 +1,8 @@
 package com.rbac.service;
 
 import com.rbac.dto.AssignmentResponse;
+import com.rbac.dto.UserCreateRequest;
+import com.rbac.dto.UserResponse;
 import com.rbac.entity.Role;
 import com.rbac.entity.User;
 import com.rbac.entity.UserRole;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -32,6 +35,9 @@ class UserServiceTest {
 
     @Mock
     private UserRoleRepo userRoleRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;
@@ -59,6 +65,42 @@ class UserServiceTest {
         assertNotNull(response);
         assertEquals("Role assigned successfully", response.getMessage());
         verify(userRoleRepository, times(1)).save(any(UserRole.class));
+
+    }
+
+    @Test
+    void createUser_Success() {
+
+        UserCreateRequest request = new UserCreateRequest();
+        request.setUsername("newuser");
+        request.setPassword("secret123");
+        when(userRepository.findByUsername("newuser")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("secret123")).thenReturn("encoded-secret123");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            user.setId(10L);
+            return user;
+        });
+        UserResponse response = userService.createUser(request);
+        assertNotNull(response);
+        assertEquals(10L, response.getId());
+        assertEquals("newuser", response.getUsername());
+        assertTrue(response.isEnabled());
+        verify(passwordEncoder).encode("secret123");
+        verify(userRepository).save(any(User.class));
+
+    }
+
+    @Test
+    void createUser_DuplicateUsername() {
+
+        UserCreateRequest request = new UserCreateRequest();
+        request.setUsername("testuser");
+        request.setPassword("secret123");
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        assertThrows(RbacExceptions.DuplicateResourceException.class, () -> userService.createUser(request));
+        verify(passwordEncoder, never()).encode(anyString());
+        verify(userRepository, never()).save(any(User.class));
 
     }
 

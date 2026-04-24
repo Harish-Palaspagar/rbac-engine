@@ -76,13 +76,13 @@ class DefaultDataSeederTest {
     }
 
     @Test
-    void run_SeedsDefaultRolesPermissionsAndUsers() throws Exception {
+    void run_SeedsDefaultRolesPermissionsAndUsers() {
         seeder.run(new DefaultApplicationArguments(new String[0]));
 
         verify(roleRepository, times(2)).save(any(Role.class));
-        verify(permissionRepository, times(5)).save(any(Permission.class));
+        verify(permissionRepository, times(6)).save(any(Permission.class));
         verify(userRepository, times(3)).save(any(User.class));
-        verify(rolePermissionRepository, times(5)).save(any());
+        verify(rolePermissionRepository, times(6)).save(any());
         verify(userRoleRepository, times(2)).save(any());
         verify(passwordEncoder).encode("admin123");
         verify(passwordEncoder, times(2)).encode("user123");
@@ -90,15 +90,16 @@ class DefaultDataSeederTest {
     }
 
     @Test
-    void run_SkipsExistingSeedData() throws Exception {
+    void run_SkipsExistingSeedData() {
 
         Role adminRole = Role.builder().id(1L).name("ADMIN").build();
         Role userRole = Role.builder().id(2L).name("USER").build();
         Permission manageRoles = Permission.builder().id(10L).name("MANAGE_ROLES").build();
         Permission managePermissions = Permission.builder().id(11L).name("MANAGE_PERMISSIONS").build();
-        Permission assignPermissions = Permission.builder().id(12L).name("ASSIGN_PERMISSIONS").build();
-        Permission assignRoles = Permission.builder().id(13L).name("ASSIGN_ROLES").build();
-        Permission accessSecureData = Permission.builder().id(14L).name("ACCESS_SECURE_DATA").build();
+        Permission manageUsers = Permission.builder().id(12L).name("MANAGE_USERS").build();
+        Permission assignPermissions = Permission.builder().id(13L).name("ASSIGN_PERMISSIONS").build();
+        Permission assignRoles = Permission.builder().id(14L).name("ASSIGN_ROLES").build();
+        Permission accessSecureData = Permission.builder().id(15L).name("ACCESS_SECURE_DATA").build();
         User admin = User.builder().id(100L).username("admin").password("encoded").build();
         User user1 = User.builder().id(101L).username("user1").password("encoded").build();
         User user2 = User.builder().id(102L).username("user2").password("encoded").build();
@@ -106,6 +107,7 @@ class DefaultDataSeederTest {
         when(roleRepository.findByName("USER")).thenReturn(Optional.of(userRole));
         when(permissionRepository.findByName("MANAGE_ROLES")).thenReturn(Optional.of(manageRoles));
         when(permissionRepository.findByName("MANAGE_PERMISSIONS")).thenReturn(Optional.of(managePermissions));
+        when(permissionRepository.findByName("MANAGE_USERS")).thenReturn(Optional.of(manageUsers));
         when(permissionRepository.findByName("ASSIGN_PERMISSIONS")).thenReturn(Optional.of(assignPermissions));
         when(permissionRepository.findByName("ASSIGN_ROLES")).thenReturn(Optional.of(assignRoles));
         when(permissionRepository.findByName("ACCESS_SECURE_DATA")).thenReturn(Optional.of(accessSecureData));
