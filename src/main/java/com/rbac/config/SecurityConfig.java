@@ -55,6 +55,7 @@ public class SecurityConfig {
                     if (h2ConsoleEnabled) {
                         auth.requestMatchers("/h2-console/**").permitAll();
                     }
+                    auth.requestMatchers("/healthz").permitAll();
                     auth.anyRequest().authenticated();
                 })
                 .httpBasic(withDefaults());
