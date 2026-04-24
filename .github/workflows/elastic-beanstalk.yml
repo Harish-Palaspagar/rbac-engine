@@ -42,11 +42,27 @@ jobs:
       - name: Build package
         run: ./mvnw -B package -DskipTests
 
-      - name: Upload application artifact
+      - name: Prepare Elastic Beanstalk bundle
+        shell: bash
+        run: |
+          JAR_FILE="$(find target -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' | head -n 1)"
+          if [ -z "$JAR_FILE" ]; then
+            echo "No packaged JAR found in target/"
+            exit 1
+          fi
+          mkdir -p bundle
+          cp "$JAR_FILE" bundle/application.jar
+          cp Procfile bundle/Procfile
+          (
+            cd bundle
+            zip -r ../elastic-beanstalk-bundle.zip .
+          )
+
+      - name: Upload deployment bundle
         uses: actions/upload-artifact@v4
         with:
-          name: application-jar
-          path: target/*.jar
+          name: elastic-beanstalk-bundle
+          path: elastic-beanstalk-bundle.zip
           if-no-files-found: error
 
   deploy:
@@ -56,29 +72,23 @@ jobs:
     if: github.event_name != 'pull_request'
 
     steps:
-      - name: Download application artifact
+      - name: Download deployment bundle
         uses: actions/download-artifact@v4
         with:
-          name: application-jar
+          name: elastic-beanstalk-bundle
           path: deploy
 
-      - name: Select packaged jar
+      - name: Select deployment bundle
         shell: bash
         run: |
-          JAR_FILE="$(find deploy -maxdepth 1 -type f -name '*.jar' | head -n 1)"
-          if [ -z "$JAR_FILE" ]; then
-            echo "No JAR artifact found"
+          BUNDLE_FILE="$(find deploy -maxdepth 1 -type f -name '*.zip' | head -n 1)"
+          if [ -z "$BUNDLE_FILE" ]; then
+            echo "No deployment bundle found"
             exit 1
           fi
-          echo "JAR_FILE=$JAR_FILE" >> "$GITHUB_ENV"
+          echo "BUNDLE_FILE=$BUNDLE_FILE" >> "$GITHUB_ENV"
           echo "VERSION_LABEL=deploy-${GITHUB_SHA}" >> "$GITHUB_ENV"
-          echo "S3_KEY=beanstalk/${GITHUB_SHA}.jar" >> "$GITHUB_ENV"
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          echo "S3_KEY=beanstalk/${GITHUB_SHA}.zip" >> "$GITHUB_ENV"
 
       - name: Validate required deployment configuration
         shell: bash
@@ -88,8 +98,14 @@ jobs:
           test -n "${EB_ENVIRONMENT_NAME}" || (echo "Missing repository variable EB_ENVIRONMENT_NAME" && exit 1)
           test -n "${EB_S3_BUCKET}" || (echo "Missing repository variable EB_S3_BUCKET" && exit 1)
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
       - name: Upload artifact to S3
-        run: aws s3 cp "${JAR_FILE}" "s3://${EB_S3_BUCKET}/${S3_KEY}"
+        run: aws s3 cp "${BUNDLE_FILE}" "s3://${EB_S3_BUCKET}/${S3_KEY}"
 
       - name: Create Elastic Beanstalk application version
         run: >
