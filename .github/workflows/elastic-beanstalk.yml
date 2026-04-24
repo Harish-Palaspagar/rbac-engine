@@ -90,8 +90,8 @@ jobs:
             exit 1
           fi
           echo "BUNDLE_FILE=$BUNDLE_FILE" >> "$GITHUB_ENV"
-          echo "VERSION_LABEL=deploy-${GITHUB_SHA}" >> "$GITHUB_ENV"
-          echo "S3_KEY=beanstalk/${GITHUB_SHA}.zip" >> "$GITHUB_ENV"
+          echo "VERSION_LABEL=deploy-${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_ENV"
+          echo "S3_KEY=beanstalk/${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.zip" >> "$GITHUB_ENV"
 
       - name: Validate required deployment configuration
         shell: bash
