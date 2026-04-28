@@ -65,60 +65,71 @@ public class DefaultDataSeeder implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+
         Role adminRole = ensureRole("ADMIN");
         Role userRole = ensureRole("USER");
-
         ADMIN_PERMISSIONS.stream()
                 .map(this::ensurePermission)
                 .forEach(permission -> ensureRolePermission(adminRole, permission));
-
         Permission userPermission = ensurePermission(USER_PERMISSION);
         ensureRolePermission(userRole, userPermission);
-
         User admin = ensureUser(adminUsername, adminPassword);
         User user1 = ensureUser(user1Username, user1Password);
         ensureUser(user2Username, user2Password);
-
         ensureUserRole(admin, adminRole);
         ensureUserRole(user1, userRole);
-
         log.info("Default RBAC seed data is ready");
+
     }
 
     private Role ensureRole(String name) {
+
         return roleRepository.findByName(name)
-                .orElseGet(() -> roleRepository.save(Role.builder().name(name).build()));
+                .orElseGet(() -> roleRepository
+                        .save(Role.builder().name(name).build()));
+
     }
 
     private Permission ensurePermission(String name) {
+
         return permissionRepository.findByName(name)
-                .orElseGet(() -> permissionRepository.save(Permission.builder().name(name).build()));
+                .orElseGet(() -> permissionRepository
+                        .save(Permission.builder().name(name).build()));
+
     }
 
     private User ensureUser(String username, String rawPassword) {
+
         return userRepository.findByUsername(username)
                 .orElseGet(() -> userRepository.save(User.builder()
                         .username(username)
                         .password(passwordEncoder.encode(rawPassword))
                         .enabled(true)
                         .build()));
+
     }
 
     private void ensureRolePermission(Role role, Permission permission) {
-        if (!rolePermissionRepository.existsByRoleIdAndPermissionId(role.getId(), permission.getId())) {
+
+        if (!rolePermissionRepository
+                .existsByRoleIdAndPermissionId(role.getId(), permission.getId())) {
             rolePermissionRepository.save(RolePermission.builder()
                     .role(role)
                     .permission(permission)
                     .build());
         }
+
     }
 
     private void ensureUserRole(User user, Role role) {
+
         if (!userRoleRepository.existsByUserIdAndRoleId(user.getId(), role.getId())) {
             userRoleRepository.save(UserRole.builder()
                     .user(user)
                     .role(role)
                     .build());
         }
+
     }
+
 }

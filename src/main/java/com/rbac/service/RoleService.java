@@ -62,9 +62,11 @@ public class RoleService {
     }
 
     public List<RoleResponse> getAllRoles() {
+
         return roleRepository.findAll().stream()
                 .map(this::toDto)
                 .toList();
+
     }
 
     public RoleResponse getRoleById(Long id) {

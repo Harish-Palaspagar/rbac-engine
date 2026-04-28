@@ -45,7 +45,8 @@ public class PermissionService {
 
         return permissionRepository.findById(id)
                 .map(this::toDto)
-                .orElseThrow(() -> new RbacExceptions.ResourceNotFoundException("Permission not found: " + id));
+                .orElseThrow(() -> new RbacExceptions
+                        .ResourceNotFoundException("Permission not found: " + id));
 
     }
 
